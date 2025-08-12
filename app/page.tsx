@@ -26,6 +26,10 @@ export default function LoginPage() {
       console.log('Login response:', res)
       localStorage.setItem('accessToken', res.accessToken)
       if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken)
+        // Set cookie for middleware-based protection
+        try {
+          document.cookie = `accessToken=${res.accessToken}; Path=/; SameSite=Lax`;
+        } catch {}
       router.push('/dashboard')
     } catch (e) {
       console.error(e)

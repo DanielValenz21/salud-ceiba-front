@@ -58,6 +58,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useLogoutMutation } from "@/modules/auth/authApi"
 
 const menuItems = [
   {
@@ -131,6 +132,8 @@ const systemItems = [
 function AppSidebar() {
   const pathname = usePathname()
 
+  const router = useRouter()
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation()
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
@@ -230,9 +233,23 @@ function AppSidebar() {
                   Configuración
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={async () => {
+                    try {
+                      await logout().unwrap()
+                    } finally {
+                      try {
+                        // expire accessToken cookie
+                        document.cookie = 'accessToken=; Path=/; Max-Age=0; SameSite=Lax'
+                      } catch {}
+                      router.replace("/")
+                    }
+                  }}
+                  disabled={isLoggingOut}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
+                  {isLoggingOut ? "Cerrando..." : "Cerrar Sesión"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -261,7 +278,7 @@ export function Layout({ children }: LayoutProps) {
 
   const getBreadcrumbs = () => {
     const segments = pathname.split("/").filter(Boolean)
-    const breadcrumbs = [{ name: "Inicio", href: "/dashboard" }]
+  const breadcrumbs = [{ name: "Inicio", href: "/dashboard" }]
 
     let currentPath = ""
     segments.forEach((segment, index) => {
@@ -287,11 +304,7 @@ export function Layout({ children }: LayoutProps) {
 
       name = routeNames[segment] || segment
 
-      if (index === segments.length - 1) {
-        breadcrumbs.push({ name, href: currentPath, current: true })
-      } else {
-        breadcrumbs.push({ name, href: currentPath })
-      }
+  breadcrumbs.push({ name, href: currentPath })
     })
 
     return breadcrumbs
@@ -310,13 +323,9 @@ export function Layout({ children }: LayoutProps) {
                   <div key={breadcrumb.href} className="flex items-center">
                     {index > 0 && <BreadcrumbSeparator />}
                     <BreadcrumbItem>
-                      {breadcrumb.current ? (
-                        <BreadcrumbPage className="text-blue-900">{breadcrumb.name}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink href={breadcrumb.href} className="text-blue-600">
-                          {breadcrumb.name}
-                        </BreadcrumbLink>
-                      )}
+                      <BreadcrumbLink href={breadcrumb.href} className="text-blue-600">
+                        {breadcrumb.name}
+                      </BreadcrumbLink>
                     </BreadcrumbItem>
                   </div>
                 ))}
