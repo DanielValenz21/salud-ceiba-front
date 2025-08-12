@@ -7,19 +7,29 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Heart } from "lucide-react"
+import { Eye, EyeOff, Heart, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLoginMutation } from "@/modules/auth/authApi"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
+  const [login, { isLoading, error }] = useLoginMutation()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulación de login
-    router.push("/dashboard")
+    try {
+      console.log('Calling login with:', { email, password })
+      const res = await login({ email, password }).unwrap()
+      console.log('Login response:', res)
+      localStorage.setItem('accessToken', res.accessToken)
+      if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken)
+      router.push('/dashboard')
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   return (
@@ -74,9 +84,25 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5">
-                Iniciar Sesión
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 flex items-center justify-center gap-2"
+              >
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isLoading ? 'Entrando...' : 'Iniciar Sesión'}
               </Button>
+              {error && (
+                <p className="mt-2 text-sm text-red-600">
+                  {(() => {
+                    // Try to surface API error message
+                    const e: any = error
+                    if (e?.data?.message) return String(e.data.message)
+                    if (e?.error) return String(e.error)
+                    return 'No se pudo iniciar sesión. Verifica tus credenciales.'
+                  })()}
+                </p>
+              )}
             </form>
             <div className="mt-6 text-center">
               <a href="#" className="text-sm text-blue-600 hover:text-blue-800">

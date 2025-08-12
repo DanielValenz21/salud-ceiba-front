@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Layout } from "@/components/layout"
+import RequireAuth from "@/components/RequireAuth"
 import {
   Search,
   Plus,
@@ -32,6 +33,8 @@ const inventarioData = [
     stockMinimo: 100,
     stockMaximo: 500,
     lote: "PF2025-456",
+  // removed erroneous import
+
     vencimiento: "2025-12-31",
     territorio: "T1",
     ubicacion: "Refrigerador A1",
@@ -145,7 +148,8 @@ export default function InventarioPage() {
   }
 
   return (
-    <Layout>
+    <RequireAuth>
+      <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -395,6 +399,7 @@ export default function InventarioPage() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+      </Layout>
+    </RequireAuth>
   )
 }
